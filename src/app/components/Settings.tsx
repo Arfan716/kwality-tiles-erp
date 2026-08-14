@@ -1,6 +1,92 @@
 import { Save, Building2, IndianRupee, Bell, Shield, Database } from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import { useState } from "react";
 
 export function Settings() {
+  const [exporting, setExporting] = useState(false);
+
+  // Export data to CSV
+  const exportData = async () => {
+    try {
+      setExporting(true);
+      
+      const tables = ['customers', 'suppliers', 'products', 'sales', 'purchases'];
+      let csvContent = '';
+
+      for (const table of tables) {
+        const { data } = await supabase.from(table).select('*');
+        
+        if (data && data.length > 0) {
+          csvContent += `\n\n=== ${table.toUpperCase()} ===\n`;
+          const headers = Object.keys(data[0]).join(',');
+          csvContent += headers + '\n';
+          
+          data.forEach(row => {
+            const values = Object.values(row).map(v => 
+              typeof v === 'string' ? `"${v}"` : v
+            ).join(',');
+            csvContent += values + '\n';
+          });
+        }
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kwality-erp-backup-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      
+      alert('✅ Data exported successfully!');
+      setExporting(false);
+    } catch (error: any) {
+      alert('❌ Export failed: ' + error.message);
+      setExporting(false);
+    }
+  };
+
+  // Backup data (same as export for now)
+  const backupData = async () => {
+    try {
+      const confirmed = window.confirm('Create a backup of all data? This will download a CSV file.');
+      if (!confirmed) return;
+      
+      await exportData();
+      alert('✅ Backup created successfully!');
+    } catch (error: any) {
+      alert('❌ Backup failed: ' + error.message);
+    }
+  };
+
+  // Delete all data
+  const deleteAllData = async () => {
+    const confirmed1 = window.confirm('⚠️ Are you sure? This will DELETE ALL data permanently!');
+    if (!confirmed1) return;
+
+    const confirmed2 = window.confirm('⚠️ This action CANNOT be undone. Type "DELETE" to confirm.');
+    if (!confirmed2) return;
+
+    try {
+      const userInput = prompt('Type "DELETE" to confirm permanent data deletion:');
+      if (userInput !== 'DELETE') {
+        alert('Cancelled. Data was not deleted.');
+        return;
+      }
+
+      // Delete data from all tables in order (respecting foreign keys)
+      await supabase.from('sales').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('purchases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('customers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('suppliers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      alert('✅ All data has been deleted!');
+      window.location.reload();
+    } catch (error: any) {
+      alert('❌ Delete failed: ' + error.message);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -172,19 +258,31 @@ export function Settings() {
           <h3>Data Management</h3>
         </div>
         <div className="space-y-3">
-          <button className="w-full p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left">
+          <button 
+            onClick={backupData}
+            className="w-full p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left"
+          >
             <p className="font-medium text-foreground">Backup Data</p>
             <p className="text-sm text-muted-foreground mt-1">
               Create a backup of all your business data
             </p>
           </button>
-          <button className="w-full p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left">
-            <p className="font-medium text-foreground">Export Data</p>
+          <button 
+            onClick={exportData}
+            disabled={exporting}
+            className="w-full p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left disabled:opacity-50"
+          >
+            <p className="font-medium text-foreground">
+              {exporting ? 'Exporting...' : 'Export Data'}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Export your data in CSV or Excel format
+              Export your data in CSV format
             </p>
           </button>
-          <button className="w-full p-4 bg-destructive/5 border border-destructive/20 rounded-lg hover:bg-destructive/10 transition-colors text-left">
+          <button 
+            onClick={deleteAllData}
+            className="w-full p-4 bg-destructive/5 border border-destructive/20 rounded-lg hover:bg-destructive/10 transition-colors text-left"
+          >
             <p className="font-medium text-destructive">Delete All Data</p>
             <p className="text-sm text-muted-foreground mt-1">
               Permanently delete all your business data (This action cannot be undone)
