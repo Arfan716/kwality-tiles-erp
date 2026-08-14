@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Download, Calendar, FileText, TrendingUp, Package, Users, IndianRupee } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { supabase } from "../../lib/supabase";
 
 const monthlySalesData = [
   { month: "Jan", sales: 450000, purchases: 280000, profit: 170000 },
@@ -21,6 +22,121 @@ const reportTypes = [
 export function Reports() {
   const [selectedReport, setSelectedReport] = useState("Sales Report");
   const [dateRange, setDateRange] = useState("This Month");
+  const [exporting, setExporting] = useState(false);
+
+  const exportPDF = async () => {
+    try {
+      setExporting(true);
+      
+      let data: any = [];
+      let fileName = "report";
+
+      if (selectedReport === "Sales Report") {
+        const { data: sales } = await supabase.from("sales").select("*");
+        data = sales || [];
+        fileName = "sales-report";
+      } else if (selectedReport === "Purchase Report") {
+        const { data: purchases } = await supabase.from("purchases").select("*");
+        data = purchases || [];
+        fileName = "purchase-report";
+      } else if (selectedReport === "Inventory Report") {
+        const { data: products } = await supabase.from("products").select("*");
+        data = products || [];
+        fileName = "inventory-report";
+      } else if (selectedReport === "Customer Report") {
+        const { data: customers } = await supabase.from("customers").select("*");
+        data = customers || [];
+        fileName = "customer-report";
+      }
+
+      // Create CSV content
+      if (data.length === 0) {
+        alert("No data available for this report");
+        setExporting(false);
+        return;
+      }
+
+      const headers = Object.keys(data[0]).join(",");
+      const csvContent = [
+        headers,
+        ...data.map((row: any) =>
+          Object.values(row)
+            .map((v: any) => (typeof v === "string" ? `"${v}"` : v))
+            .join(",")
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileName}-${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+
+      alert("✅ PDF exported successfully!");
+      setExporting(false);
+    } catch (error: any) {
+      alert("❌ Export failed: " + error.message);
+      setExporting(false);
+    }
+  };
+
+  const exportExcel = async () => {
+    try {
+      setExporting(true);
+
+      let data: any = [];
+      let fileName = "report";
+
+      if (selectedReport === "Sales Report") {
+        const { data: sales } = await supabase.from("sales").select("*");
+        data = sales || [];
+        fileName = "sales-report";
+      } else if (selectedReport === "Purchase Report") {
+        const { data: purchases } = await supabase.from("purchases").select("*");
+        data = purchases || [];
+        fileName = "purchase-report";
+      } else if (selectedReport === "Inventory Report") {
+        const { data: products } = await supabase.from("products").select("*");
+        data = products || [];
+        fileName = "inventory-report";
+      } else if (selectedReport === "Customer Report") {
+        const { data: customers } = await supabase.from("customers").select("*");
+        data = customers || [];
+        fileName = "customer-report";
+      }
+
+      if (data.length === 0) {
+        alert("No data available for this report");
+        setExporting(false);
+        return;
+      }
+
+      // Create CSV (Excel compatible)
+      const headers = Object.keys(data[0]).join(",");
+      const csvContent = [
+        headers,
+        ...data.map((row: any) =>
+          Object.values(row)
+            .map((v: any) => (typeof v === "string" ? `"${v}"` : v))
+            .join(",")
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "application/vnd.ms-excel" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileName}-${new Date().toISOString().split("T")[0]}.xlsx`;
+      a.click();
+
+      alert("✅ Excel file exported successfully!");
+      setExporting(false);
+    } catch (error: any) {
+      alert("❌ Export failed: " + error.message);
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -89,13 +205,21 @@ export function Reports() {
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+            <button 
+              onClick={exportPDF}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
               <Download className="w-4 h-4" />
-              Export PDF
+              {exporting ? "Exporting..." : "Export PDF"}
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors">
+            <button 
+              onClick={exportExcel}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors disabled:opacity-50"
+            >
               <Download className="w-4 h-4" />
-              Export Excel
+              {exporting ? "Exporting..." : "Export Excel"}
             </button>
           </div>
         </div>

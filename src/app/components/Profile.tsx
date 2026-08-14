@@ -1,7 +1,38 @@
 import { User, Mail, Phone, MapPin, Calendar, Shield, Edit, Camera } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "../../lib/supabase";
 
 export function Profile() {
-  return (
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [userEmail, setUserEmail] = useState("owner@kwality.com");
+
+  const handleEditProfile = () => {
+    alert("Profile edit feature coming soon! You can update your details via Supabase dashboard.");
+  };
+
+  const handleChangePassword = async () => {
+    const newPassword = prompt("Enter new password:");
+    if (!newPassword) return;
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        alert("❌ Password change failed: " + error.message);
+      } else {
+        alert("✅ Password changed successfully!");
+      }
+    } catch (err: any) {
+      alert("❌ Error: " + err.message);
+    }
+  };
+
+  const handleEnable2FA = () => {
+    alert("Two-Factor Authentication setup:\n1. Install an authenticator app (Google Authenticator, Authy, etc.)\n2. Scan the QR code from your Supabase dashboard\n3. Enable 2FA in Supabase settings");
+  };
+
+  const handleLoginHistory = () => {
+    alert("Login history is available in your Supabase dashboard:\n1. Go to app.supabase.com\n2. Click Auth → Users\n3. View your last login activities");
+  };
     <div className="space-y-6">
       {/* Header */}
       <div>
@@ -34,7 +65,10 @@ export function Profile() {
               </span>
             </div>
           </div>
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+          <button 
+            onClick={handleEditProfile}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
             <Edit className="w-4 h-4" />
             Edit Profile
           </button>
@@ -127,7 +161,10 @@ export function Profile() {
                 Last changed 3 months ago
               </p>
             </div>
-            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+            <button 
+              onClick={handleChangePassword}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
               Change
             </button>
           </div>
@@ -138,7 +175,10 @@ export function Profile() {
                 Not enabled - Add an extra layer of security
               </p>
             </div>
-            <button className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors">
+            <button 
+              onClick={handleEnable2FA}
+              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
+            >
               Enable
             </button>
           </div>
@@ -149,7 +189,10 @@ export function Profile() {
                 View your recent login activity
               </p>
             </div>
-            <button className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors border border-border">
+            <button 
+              onClick={handleLoginHistory}
+              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors border border-border"
+            >
               View
             </button>
           </div>
