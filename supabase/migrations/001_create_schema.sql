@@ -1,5 +1,13 @@
 -- Create tables for Kwality Tiles ERP
 
+-- Drop existing tables if they exist (safe for development/setup)
+DROP TABLE IF EXISTS sales CASCADE;
+DROP TABLE IF EXISTS purchases CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS suppliers CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- Customers table
 CREATE TABLE IF NOT EXISTS customers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -100,13 +108,6 @@ ALTER TABLE purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies - allow all (you can make this more restrictive later)
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON customers;
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON suppliers;
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON products;
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON sales;
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON purchases;
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON users;
-
 CREATE POLICY "Allow all for authenticated users" ON customers FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Allow all for authenticated users" ON suppliers FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Allow all for authenticated users" ON products FOR ALL USING (auth.role() = 'authenticated');
