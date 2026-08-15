@@ -1,10 +1,45 @@
 import { User, Mail, Phone, MapPin, Calendar, Shield, Edit, Camera } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 
 export function Profile() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [userEmail, setUserEmail] = useState("owner@kwality.com");
+  const [stats, setStats] = useState({
+    totalSales: "₹0",
+    totalPurchase: "₹0",
+    totalCustomers: 0,
+    totalProducts: 0,
+  });
+
+  useEffect(() => {
+    fetchActivityStats();
+  }, []);
+
+  const fetchActivityStats = async () => {
+    try {
+      const [salesRes, purchasesRes, customersRes, productsRes] = await Promise.all([
+        supabase.from("sales").select("total"),
+        supabase.from("purchases").select("total"),
+        supabase.from("customers").select("id"),
+        supabase.from("products").select("id"),
+      ]);
+
+      const totalSales = (salesRes.data || []).reduce((sum: number, s: any) => sum + (s.total || 0), 0);
+      const totalPurchase = (purchasesRes.data || []).reduce((sum: number, p: any) => sum + (p.total || 0), 0);
+      const totalCustomers = (customersRes.data || []).length;
+      const totalProducts = (productsRes.data || []).length;
+
+      setStats({
+        totalSales: `₹${(totalSales / 100000).toFixed(2)}L`,
+        totalPurchase: `₹${(totalPurchase / 100000).toFixed(2)}L`,
+        totalCustomers,
+        totalProducts,
+      });
+    } catch (error) {
+      console.error("Error fetching activity stats:", error);
+    }
+  };
 
   const handleEditProfile = () => {
     alert("Profile edit feature coming soon! You can update your details via Supabase dashboard.");
@@ -132,19 +167,19 @@ export function Profile() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">Total Sales</p>
-            <h3 className="mt-1 text-success">₹45,28,900</h3>
+            <h3 className="mt-1 text-success">{stats.totalSales}</h3>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">Total Purchase</p>
-            <h3 className="mt-1 text-primary">₹28,94,500</h3>
+            <h3 className="mt-1 text-primary">{stats.totalPurchase}</h3>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">Total Customers</p>
-            <h3 className="mt-1">156</h3>
+            <h3 className="mt-1">{stats.totalCustomers}</h3>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">Total Products</p>
-            <h3 className="mt-1">342</h3>
+            <h3 className="mt-1">{stats.totalProducts}</h3>
           </div>
         </div>
       </div>
