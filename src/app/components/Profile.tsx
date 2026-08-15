@@ -33,6 +33,8 @@ export function Profile() {
   const handleLoginHistory = () => {
     alert("Login history is available in your Supabase dashboard:\n1. Go to app.supabase.com\n2. Click Auth → Users\n3. View your last login activities");
   };
+
+  return (
     <div className="space-y-6">
       {/* Header */}
       <div>
