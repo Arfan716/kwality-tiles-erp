@@ -12,54 +12,86 @@ export function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  setLoading(true);
+    setLoading(true);
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
+    if (error) {
+      setLoading(false);
+      alert(error.message);
+      return;
+    }
+
+    const user = data.user;
+
+    if (!user) {
+      setLoading(false);
+      alert("Login failed");
+      return;
+    }
+
+    console.log("Logged in User ID:", user.id);
+
+    // Try to fetch user profile
+    let { data: userProfile, error: profileError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    // If profile doesn't exist, create it automatically (permanent fix!)
+    if (profileError || !userProfile) {
+      console.log("Profile not found, creating automatically...");
+      
+      const { data: newProfile, error: createError } = await supabase
+        .from("users")
+        .insert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || "Admin User",
+          role: "admin",
+          permissions: [
+            "dashboard",
+            "inventory",
+            "purchase",
+            "sales",
+            "customers",
+            "suppliers",
+            "bills",
+            "reports",
+            "staff",
+            "settings",
+          ],
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        setLoading(false);
+        alert("Failed to create user profile: " + createError.message);
+        return;
+      }
+
+      userProfile = newProfile;
+    }
+
     setLoading(false);
-    alert(error.message);
-    return;
-  }
 
-  const user = data.user;
+    localStorage.setItem("userRole", userProfile.role);
+    localStorage.setItem("userName", userProfile.full_name);
+    localStorage.setItem("userEmail", user.email || "");
+    localStorage.setItem(
+      "permissions",
+      JSON.stringify(userProfile.permissions || [])
+    );
 
-  if (!user) {
-    setLoading(false);
-    alert("Login failed");
-    return;
-  }
-
-  console.log("Logged in User ID:", user.id);
-
-const { data: userProfile, error: profileError } = await supabase
-  .from("users")
-  .select("*")
-  .eq("id", user.id)
-  .single();
-
-setLoading(false);
-
-if (profileError || !userProfile) {
-  alert("User profile not found.");
-  return;
-}
-
-localStorage.setItem("userRole", userProfile.role);
-localStorage.setItem("userName", userProfile.full_name);
-localStorage.setItem("userEmail", user.email || "");
-localStorage.setItem(
-  "permissions",
-  JSON.stringify(userProfile.permissions || [])
-);
-
-navigate("/");
-};
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-background flex">

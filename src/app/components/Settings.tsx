@@ -58,9 +58,9 @@ export function Settings() {
     }
   };
 
-  // Delete all data
+  // Delete all data (but PRESERVE user accounts)
   const deleteAllData = async () => {
-    const confirmed1 = window.confirm('⚠️ Are you sure? This will DELETE ALL data permanently!');
+    const confirmed1 = window.confirm('⚠️ Are you sure? This will DELETE ALL BUSINESS DATA permanently!\n\n✅ Your user accounts will be PRESERVED.\n\nDeletes: Customers, Suppliers, Products, Sales, Purchases');
     if (!confirmed1) return;
 
     const confirmed2 = window.confirm('⚠️ This action CANNOT be undone. Type "DELETE" to confirm.');
@@ -73,14 +73,16 @@ export function Settings() {
         return;
       }
 
-      // Delete data from all tables in order (respecting foreign keys)
+      // Delete ONLY business data (preserve user accounts!)
+      // Order matters: delete dependent tables first
       await supabase.from('sales').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('purchases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('customers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('suppliers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // NOTE: users table is NEVER deleted - user accounts are preserved!
 
-      alert('✅ All data has been deleted!');
+      alert('✅ All business data has been deleted!\n✅ User accounts are preserved.');
       window.location.reload();
     } catch (error: any) {
       alert('❌ Delete failed: ' + error.message);
