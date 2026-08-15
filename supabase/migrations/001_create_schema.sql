@@ -113,4 +113,4 @@ CREATE POLICY "Allow all for authenticated users" ON suppliers FOR ALL USING (au
 CREATE POLICY "Allow all for authenticated users" ON products FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Allow all for authenticated users" ON sales FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Allow all for authenticated users" ON purchases FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "Allow all for authenticated users" ON users FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow all for authenticated users" ON users FOR ALL USING (auth.role() = 'authenticated');
