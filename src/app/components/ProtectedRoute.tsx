@@ -39,6 +39,23 @@ export function ProtectedRoute({
   const hasRoleAccess =
     allowedRoles.length === 0 || allowedRoles.includes(role);
 
+  console.log("PROTECTED ROUTE DEBUG", {
+    pathname: window.location.pathname,
+    role,
+    permissions,
+    allowedRoles,
+    allowedPermissions,
+    hasPermission,
+    hasRoleAccess,
+    isAuthorized: hasPermission && hasRoleAccess,
+  });
+
+  console.log("TYPES", {
+    roleType: typeof role,
+    permissionsIsArray: Array.isArray(permissions),
+    allowedPermissionsIsArray: Array.isArray(allowedPermissions),
+  });
+
   const isAuthorized = hasPermission && hasRoleAccess;
 
   if (!isAuthorized) {
