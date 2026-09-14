@@ -107,40 +107,50 @@ export function Settings() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm mb-2">Business Name</label>
+            <label htmlFor="business-name" className="block text-sm mb-2">Business Name</label>
             <input
+              id="business-name"
+              name="businessName"
               type="text"
               defaultValue="Kwality Tiles & Granite"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="block text-sm mb-2">GST Number</label>
+            <label htmlFor="gst-number" className="block text-sm mb-2">GST Number</label>
             <input
+              id="gst-number"
+              name="gstNumber"
               type="text"
               defaultValue="27XXXXX1234X1ZX"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="block text-sm mb-2">Phone Number</label>
+            <label htmlFor="business-phone" className="block text-sm mb-2">Phone Number</label>
             <input
+              id="business-phone"
+              name="businessPhone"
               type="tel"
               defaultValue="+91 9876543210"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="block text-sm mb-2">Email Address</label>
+            <label htmlFor="business-email" className="block text-sm mb-2">Email Address</label>
             <input
+              id="business-email"
+              name="businessEmail"
               type="email"
               defaultValue="contact@kwalitytiles.com"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div className="lg:col-span-2">
-            <label className="block text-sm mb-2">Business Address</label>
+            <label htmlFor="business-address" className="block text-sm mb-2">Business Address</label>
             <textarea
+              id="business-address"
+              name="businessAddress"
               rows={3}
               defaultValue="Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
@@ -157,32 +167,36 @@ export function Settings() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm mb-2">Default Tax Rate (%)</label>
+            <label htmlFor="tax-rate" className="block text-sm mb-2">Default Tax Rate (%)</label>
             <input
+              id="tax-rate"
+              name="taxRate"
               type="number"
               defaultValue="18"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="block text-sm mb-2">Currency</label>
-            <select className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <label htmlFor="currency" className="block text-sm mb-2">Currency</label>
+            <select id="currency" name="currency" className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option>INR (₹)</option>
               <option>USD ($)</option>
               <option>EUR (€)</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm mb-2">Payment Terms (Days)</label>
+            <label htmlFor="payment-terms" className="block text-sm mb-2">Payment Terms (Days)</label>
             <input
+              id="payment-terms"
+              name="paymentTerms"
               type="number"
               defaultValue="30"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="block text-sm mb-2">Financial Year Start</label>
-            <select className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <label htmlFor="financial-year-start" className="block text-sm mb-2">Financial Year Start</label>
+            <select id="financial-year-start" name="financialYearStart" className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option>April</option>
               <option>January</option>
             </select>
@@ -225,14 +239,18 @@ export function Settings() {
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm mb-2">Change Password</label>
+            <p className="block text-sm mb-2">Change Password</p>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <input
+                id="current-password"
+                name="currentPassword"
                 type="password"
                 placeholder="Current Password"
                 className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               <input
+                id="new-password"
+                name="newPassword"
                 type="password"
                 placeholder="New Password"
                 className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -246,7 +264,7 @@ export function Settings() {
                 Add an extra layer of security to your account
               </p>
             </div>
-            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+            <button type="button" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
               Enable
             </button>
           </div>
@@ -261,6 +279,7 @@ export function Settings() {
         </div>
         <div className="space-y-3">
           <button 
+            type="button"
             onClick={backupData}
             className="w-full p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left"
           >
@@ -270,6 +289,7 @@ export function Settings() {
             </p>
           </button>
           <button 
+            type="button"
             onClick={exportData}
             disabled={exporting}
             className="w-full p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left disabled:opacity-50"
@@ -282,6 +302,7 @@ export function Settings() {
             </p>
           </button>
           <button 
+            type="button"
             onClick={deleteAllData}
             className="w-full p-4 bg-destructive/5 border border-destructive/20 rounded-lg hover:bg-destructive/10 transition-colors text-left"
           >
@@ -295,7 +316,7 @@ export function Settings() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <button className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+        <button type="button" className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
           <Save className="w-4 h-4" />
           Save Changes
         </button>

@@ -181,11 +181,13 @@ export function Login() {
             <form onSubmit={handleLogin} className="space-y-6">
 
               <div>
-                <label className="block text-sm mb-2">
+                <label htmlFor="login-email" className="block text-sm mb-2">
                   Email Address
                 </label>
 
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -195,12 +197,14 @@ export function Login() {
               </div>
 
               <div>
-                <label className="block text-sm mb-2">
+                <label htmlFor="login-password" className="block text-sm mb-2">
                   Password
                 </label>
 
                 <div className="relative">
                   <input
+                    id="login-password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) =>
@@ -259,7 +263,7 @@ export function Login() {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <button className="text-primary hover:underline">
+                <button type="button" className="text-primary hover:underline">
                   Contact Administrator
                 </button>
               </p>

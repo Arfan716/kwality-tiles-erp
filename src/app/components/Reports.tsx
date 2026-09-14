@@ -154,6 +154,7 @@ export function Reports() {
           const Icon = report.icon;
           return (
             <button
+              type="button"
               key={report.name}
               onClick={() => setSelectedReport(report.name)}
               className={`bg-card rounded-xl p-6 border-2 transition-all text-left ${
@@ -206,6 +207,7 @@ export function Reports() {
           </div>
           <div className="flex gap-2">
             <button 
+              type="button"
               onClick={exportPDF}
               disabled={exporting}
               className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
@@ -214,6 +216,7 @@ export function Reports() {
               {exporting ? "Exporting..." : "Export PDF"}
             </button>
             <button 
+              type="button"
               onClick={exportExcel}
               disabled={exporting}
               className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors disabled:opacity-50"

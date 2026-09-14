@@ -11,10 +11,11 @@ interface Supplier {
 interface Product {
   id: string;
   name: string;
-  size: string;
+  category?: string;
+  size?: string;
   unit: string;
   opening_stock: number;
-  purchase_rate: number;
+  rate: number;
 }
 
 interface PurchaseItem {
@@ -63,7 +64,10 @@ export function PurchaseEntry() {
       .select("*")
       .order("name");
 
-    if (data) setProducts(data);
+    if (data) {
+      const activeProducts = data.filter((product) => product.is_active !== false);
+      setProducts(activeProducts);
+    }
   }
 
   function removeItem(id: number) {
@@ -95,7 +99,7 @@ export function PurchaseEntry() {
               ...i,
               productId: product.id,
               productName: product.name,
-              rate: Number(product.purchase_rate),
+              rate: Number(product.rate ?? 0),
               unit: product.unit,
             }
           : i
@@ -213,8 +217,10 @@ export function PurchaseEntry() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Supplier */}
           <div>
-            <label className="block text-sm mb-2">Supplier</label>
+            <label htmlFor="purchase-supplier" className="block text-sm mb-2">Supplier</label>
             <select
+              id="purchase-supplier"
+              name="purchaseSupplier"
               value={selectedSupplier}
               onChange={(e) => setSelectedSupplier(e.target.value)}
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -230,8 +236,10 @@ export function PurchaseEntry() {
 
           {/* Invoice Number */}
           <div>
-            <label className="block text-sm mb-2">Invoice Number</label>
+            <label htmlFor="purchase-invoice-number" className="block text-sm mb-2">Invoice Number</label>
             <input
+              id="purchase-invoice-number"
+              name="purchaseInvoiceNumber"
               type="text"
               placeholder="INV-00001"
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -240,9 +248,11 @@ export function PurchaseEntry() {
 
           {/* Date */}
           <div>
-            <label className="block text-sm mb-2">Purchase Date</label>
+            <label htmlFor="purchase-date" className="block text-sm mb-2">Purchase Date</label>
             <div className="relative">
               <input
+                id="purchase-date"
+                name="purchaseDate"
                 type="date"
                 defaultValue={new Date().toISOString().split("T")[0]}
                 className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -283,6 +293,8 @@ export function PurchaseEntry() {
                   <tr key={item.id}>
                     <td className="px-4 py-3">
                       <select
+                        id={`purchase-product-${item.id}`}
+                        name={`purchaseProduct-${item.id}`}
                         value={item.productId}
                         onChange={(e) => selectProduct(item.id, e.target.value)}
                         className="w-full min-w-[200px] px-2 py-1 bg-background rounded border border-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
@@ -290,13 +302,16 @@ export function PurchaseEntry() {
                         <option value="">Select Product</option>
                         {products.map((product) => (
                           <option key={product.id} value={product.id}>
-                            {product.name} ({product.size})
+                            {product.name}
+                            {product.size ? ` (${product.size})` : ""}
                           </option>
                         ))}
                       </select>
                     </td>
                     <td className="px-4 py-3">
                       <input
+                        id={`purchase-qty-${item.id}`}
+                        name={`purchaseQty-${item.id}`}
                         type="number"
                         value={item.quantity}
                         onChange={(e) =>
@@ -307,6 +322,8 @@ export function PurchaseEntry() {
                     </td>
                     <td className="px-4 py-3">
                       <input
+                        id={`purchase-unit-${item.id}`}
+                        name={`purchaseUnit-${item.id}`}
                         type="text"
                         value={item.unit}
                         readOnly
@@ -315,6 +332,8 @@ export function PurchaseEntry() {
                     </td>
                     <td className="px-4 py-3">
                       <input
+                        id={`purchase-rate-${item.id}`}
+                        name={`purchaseRate-${item.id}`}
                         type="number"
                         value={item.rate}
                         readOnly
@@ -326,6 +345,8 @@ export function PurchaseEntry() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
+                        type="button"
+                        aria-label={`Remove item ${item.id}`}
                         onClick={() => removeItem(item.id)}
                         className="p-1 hover:bg-destructive/10 rounded transition-colors"
                       >
@@ -340,6 +361,7 @@ export function PurchaseEntry() {
         </div>
 
         <button
+          type="button"
           onClick={addItem}
           className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
         >
@@ -352,8 +374,10 @@ export function PurchaseEntry() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Notes */}
         <div className="bg-card rounded-xl p-6 border border-border">
-          <label className="block text-sm mb-2">Notes</label>
+          <label htmlFor="purchase-notes" className="block text-sm mb-2">Notes</label>
           <textarea
+            id="purchase-notes"
+            name="purchaseNotes"
             rows={6}
             placeholder="Add any additional notes or remarks..."
             className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
@@ -384,12 +408,13 @@ export function PurchaseEntry() {
 
           <div className="flex gap-3 mt-6">
             <button
+              type="button"
               onClick={savePurchase}
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               Save Purchase
             </button>
-            <button className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors">
+            <button type="button" className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors">
               Cancel
             </button>
           </div>

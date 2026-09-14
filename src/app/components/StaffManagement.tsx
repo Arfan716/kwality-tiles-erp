@@ -193,6 +193,7 @@ console.log("Function response:", data);
       </div>
 
       <button
+        type="button"
         onClick={() => setShowAddModal(true)}
         className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition"
       >
@@ -323,12 +324,16 @@ console.log("Function response:", data);
               <div className="flex gap-2">
 
                 <button
+                  type="button"
+                  aria-label={`Edit ${member.full_name}`}
                   className="p-2 rounded-lg hover:bg-muted"
                 >
                   <Edit className="w-5 h-5" />
                 </button>
 
                 <button
+                  type="button"
+                  aria-label={`Delete ${member.full_name}`}
                   onClick={() => deleteStaff(member.id)}
                   className="p-2 rounded-lg hover:bg-red-100 text-red-600"
                 >
@@ -377,6 +382,7 @@ console.log("Function response:", data);
 
         <button
           type="button"
+          aria-label="Close add staff dialog"
           onClick={() => setShowAddModal(false)}
           className="text-muted-foreground hover:text-foreground text-xl"
         >
@@ -392,11 +398,13 @@ console.log("Function response:", data);
 
         <div>
 
-          <label className="block mb-2 font-medium">
+          <label htmlFor="staff-full-name" className="block mb-2 font-medium">
             Full Name
           </label>
 
           <input
+            id="staff-full-name"
+            name="fullName"
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -408,11 +416,13 @@ console.log("Function response:", data);
 
         <div>
 
-          <label className="block mb-2 font-medium">
+          <label htmlFor="staff-email" className="block mb-2 font-medium">
             Email
           </label>
 
           <input
+            id="staff-email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -424,11 +434,13 @@ console.log("Function response:", data);
 
         <div>
 
-          <label className="block mb-2 font-medium">
+          <label htmlFor="staff-password" className="block mb-2 font-medium">
             Password
           </label>
 
           <input
+            id="staff-password"
+            name="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -440,11 +452,13 @@ console.log("Function response:", data);
 
         <div>
 
-          <label className="block mb-2 font-medium">
+          <label htmlFor="staff-role" className="block mb-2 font-medium">
             Role
           </label>
 
           <select
+            id="staff-role"
+            name="role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="w-full px-4 py-3 rounded-lg bg-muted"
@@ -457,9 +471,9 @@ console.log("Function response:", data);
 
         <div>
 
-  <label className="block mb-3 font-medium">
+  <p className="block mb-3 font-medium">
     Permissions
-  </label>
+  </p>
 
   <div className="grid grid-cols-2 gap-3">
 

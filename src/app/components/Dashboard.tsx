@@ -293,7 +293,7 @@ export function Dashboard() {
         <div className="bg-card rounded-xl p-6 border border-border">
           <div className="flex items-center justify-between mb-6">
             <h3>Recent Orders</h3>
-            <button className="text-sm text-primary hover:underline">View All</button>
+            <button type="button" className="text-sm text-primary hover:underline">View All</button>
           </div>
           <div className="space-y-4">
             {recentOrders.map((order) => (

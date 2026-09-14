@@ -46,6 +46,15 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Compatibility columns used by the existing ERP UI
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS type TEXT,
+  ADD COLUMN IF NOT EXISTS size TEXT,
+  ADD COLUMN IF NOT EXISTS purchase_rate DECIMAL(10, 2) DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS selling_rate DECIMAL(10, 2) DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS notes TEXT,
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
 -- Sales table
 CREATE TABLE IF NOT EXISTS sales (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

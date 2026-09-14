@@ -317,7 +317,7 @@ autoTable(doc, {
               <option>Partial</option>
               <option>Overdue</option>
             </select>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+            <button type="button" className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export</span>
             </button>
@@ -394,6 +394,8 @@ autoTable(doc, {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
+                        type="button"
+                        aria-label={`View invoice ${bill.billNo}`}
                         onClick={() => {
                           setSelectedBill(bill);
                           setShowInvoice(true);
@@ -403,6 +405,8 @@ autoTable(doc, {
                         <Eye className="w-4 h-4 text-muted-foreground" />
                       </button>
                       <button
+                        type="button"
+                        aria-label={`Download invoice ${bill.billNo}`}
                         onClick={() => downloadPDF(bill)}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"
                       >
@@ -464,6 +468,8 @@ autoTable(doc, {
             <div className="flex gap-3 mt-8">
 
               <button
+                type="button"
+                aria-label={`Download invoice ${selectedBill.billNo}`}
                 onClick={() => downloadPDF(selectedBill)}
                 className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg"
               >
@@ -471,6 +477,8 @@ autoTable(doc, {
               </button>
 
               <button
+                type="button"
+                aria-label="Close invoice details"
                 onClick={() => setShowInvoice(false)}
                 className="px-5 py-2 bg-muted rounded-lg"
               >

@@ -34,7 +34,7 @@ export const router = createBrowserRouter([
       {
   path: "inventory",
   element: (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedPermissions={["inventory"]}>
       <Inventory />
     </ProtectedRoute>
   ),
@@ -42,7 +42,7 @@ export const router = createBrowserRouter([
       {
   path: "purchase",
   element: (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedPermissions={["purchase"]}>
       <PurchaseEntry />
     </ProtectedRoute>
   ),
@@ -52,7 +52,7 @@ export const router = createBrowserRouter([
       {
   path: "suppliers",
   element: (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedPermissions={["suppliers"]}>
       <Suppliers />
     </ProtectedRoute>
   ),
@@ -61,7 +61,7 @@ export const router = createBrowserRouter([
       {
   path: "reports",
   element: (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedPermissions={["reports"]}>
       <Reports />
     </ProtectedRoute>
   ),
@@ -69,7 +69,7 @@ export const router = createBrowserRouter([
       {
   path: "settings",
   element: (
-    <ProtectedRoute allowedRoles={["owner"]}>
+    <ProtectedRoute allowedPermissions={["settings"]}>
       <Settings />
     </ProtectedRoute>
   ),
@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
       {
   path: "staff",
   element: (
-    <ProtectedRoute allowedRoles={["owner"]}>
+    <ProtectedRoute allowedPermissions={["staff"]}>
       <StaffManagement />
     </ProtectedRoute>
   ),

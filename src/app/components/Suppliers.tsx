@@ -77,6 +77,7 @@ export function Suppliers() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowAddModal(true)}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
@@ -123,10 +124,12 @@ export function Suppliers() {
                 </span>
               </div>
               <div className="flex gap-2">
-                <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                <button type="button" aria-label={`Edit ${supplier.name}`} className="p-2 hover:bg-muted rounded-lg transition-colors">
                   <Edit className="w-4 h-4 text-muted-foreground" />
                 </button>
                 <button
+                  type="button"
+                  aria-label={`Delete ${supplier.name}`}
                   onClick={() => deleteSupplier(supplier.id)}
                   className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
                 >
@@ -156,6 +159,8 @@ export function Suppliers() {
             <div className="flex items-center justify-between mb-6">
               <h2>Add New Supplier</h2>
               <button
+                type="button"
+                aria-label="Close add supplier dialog"
                 onClick={() => setShowAddModal(false)}
                 className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
@@ -165,8 +170,10 @@ export function Suppliers() {
 
             <form onSubmit={addSupplier} className="space-y-4">
               <div>
-                <label className="block text-sm mb-2">Company Name</label>
+                <label htmlFor="supplier-name" className="block text-sm mb-2">Company Name</label>
                 <input
+                  id="supplier-name"
+                  name="supplierName"
                   type="text"
                   value={newSupplier.name}
                   onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
@@ -176,8 +183,10 @@ export function Suppliers() {
               </div>
 
               <div>
-                <label className="block text-sm mb-2">Phone Number</label>
+                <label htmlFor="supplier-phone" className="block text-sm mb-2">Phone Number</label>
                 <input
+                  id="supplier-phone"
+                  name="supplierPhone"
                   type="tel"
                   value={newSupplier.phone}
                   onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
@@ -187,8 +196,10 @@ export function Suppliers() {
               </div>
 
               <div>
-                <label className="block text-sm mb-2">Address</label>
+                <label htmlFor="supplier-address" className="block text-sm mb-2">Address</label>
                 <textarea
+                  id="supplier-address"
+                  name="supplierAddress"
                   rows={3}
                   value={newSupplier.address}
                   onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })}

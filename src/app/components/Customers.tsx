@@ -74,6 +74,7 @@ export function Customers() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowAddModal(true)}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
@@ -120,10 +121,12 @@ export function Customers() {
                 </span>
               </div>
               <div className="flex gap-2">
-                <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+                <button type="button" aria-label={`Edit ${customer.name}`} className="p-2 hover:bg-muted rounded-lg transition-colors">
                   <Edit className="w-4 h-4 text-muted-foreground" />
                 </button>
                 <button
+                  type="button"
+                  aria-label={`Delete ${customer.name}`}
                   onClick={() => deleteCustomer(customer.id)}
                   className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
                 >
@@ -158,6 +161,8 @@ export function Customers() {
             <div className="flex items-center justify-between mb-6">
               <h2>Add New Customer</h2>
               <button
+                type="button"
+                aria-label="Close add customer dialog"
                 onClick={() => setShowAddModal(false)}
                 className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
@@ -167,8 +172,10 @@ export function Customers() {
 
             <form onSubmit={addCustomer} className="space-y-4">
               <div>
-                <label className="block text-sm mb-2">Customer Name</label>
+                <label htmlFor="customer-name" className="block text-sm mb-2">Customer Name</label>
                 <input
+                  id="customer-name"
+                  name="customerName"
                   type="text"
                   value={newCustomer.name}
                   onChange={(e) =>
@@ -181,8 +188,10 @@ export function Customers() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-2">Phone Number</label>
+                  <label htmlFor="customer-phone" className="block text-sm mb-2">Phone Number</label>
                   <input
+                    id="customer-phone"
+                    name="customerPhone"
                     type="tel"
                     value={newCustomer.phone}
                     onChange={(e) =>
@@ -193,8 +202,10 @@ export function Customers() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-2">Email Address</label>
+                  <label htmlFor="customer-email" className="block text-sm mb-2">Email Address</label>
                   <input
+                    id="customer-email"
+                    name="customerEmail"
                     type="email"
                     value={newCustomer.email}
                     onChange={(e) =>
@@ -207,8 +218,10 @@ export function Customers() {
               </div>
 
               <div>
-                <label className="block text-sm mb-2">Address</label>
+                <label htmlFor="customer-address" className="block text-sm mb-2">Address</label>
                 <textarea
+                  id="customer-address"
+                  name="customerAddress"
                   rows={3}
                   value={newCustomer.address}
                   onChange={(e) =>
@@ -220,8 +233,10 @@ export function Customers() {
               </div>
 
               <div>
-                <label className="block text-sm mb-2">Notes</label>
+                <label htmlFor="customer-notes" className="block text-sm mb-2">Notes</label>
                 <textarea
+                  id="customer-notes"
+                  name="customerNotes"
                   rows={3}
                   value={newCustomer.notes}
                   onChange={(e) =>

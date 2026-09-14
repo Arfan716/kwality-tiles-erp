@@ -15,12 +15,11 @@ const [inventoryItems, setInventoryItems] = useState<any[]>([]);
 
 const [newProduct, setNewProduct] = useState({
   name: "",
-  type: "",
+  category: "",
   size: "",
   opening_stock: 0,
   unit: "",
-  purchase_rate: 0,
-  selling_rate: 0,
+  rate: 0,
   notes: "",
 });
 useEffect(() => {
@@ -38,13 +37,27 @@ async function fetchProducts() {
     return;
   }
 
-  setInventoryItems(data || []);
+  const activeItems = (data || []).filter(
+    (item) => item.is_active !== false
+  );
+
+  setInventoryItems(activeItems);
 }
 
 async function addProduct() {
   const { error } = await supabase
     .from("products")
-    .insert([newProduct]);
+    .insert([
+      {
+        name: newProduct.name,
+        category: newProduct.category,
+        size: newProduct.size,
+        unit: newProduct.unit,
+        opening_stock: Number(newProduct.opening_stock) || 0,
+        rate: Number(newProduct.rate) || 0,
+        description: newProduct.notes || "",
+      },
+    ]);
 
   if (error) {
     alert(error.message);
@@ -61,6 +74,54 @@ async function deleteProduct(id: string) {
   );
 
   if (!confirmDelete) return;
+
+  const { data: salesUsage, error: salesCheckError } = await supabase
+    .from("sales")
+    .select("id")
+    .eq("product_id", id)
+    .limit(1);
+
+  if (salesCheckError) {
+    alert(salesCheckError.message);
+    return;
+  }
+
+  const { data: purchaseUsage, error: purchaseCheckError } = await supabase
+    .from("purchases")
+    .select("id")
+    .eq("product_id", id)
+    .limit(1);
+
+  if (purchaseCheckError) {
+    alert(purchaseCheckError.message);
+    return;
+  }
+
+  const hasUsage =
+    (salesUsage && salesUsage.length > 0) ||
+    (purchaseUsage && purchaseUsage.length > 0);
+
+  if (hasUsage) {
+    const { error: archiveError } = await supabase
+      .from("products")
+      .update({
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (archiveError) {
+      alert(archiveError.message);
+      return;
+    }
+
+    alert(
+      "This product has existing sales or purchase history, so it has been archived instead of permanently deleted. Existing records remain intact."
+    );
+
+    fetchProducts();
+    return;
+  }
 
   const { error } = await supabase
     .from("products")
@@ -82,13 +143,12 @@ async function updateProduct() {
     .from("products")
     .update({
       name: editingProduct.name,
-      type: editingProduct.type,
-      size: editingProduct.size,
-      opening_stock: editingProduct.opening_stock,
-      unit: editingProduct.unit,
-      purchase_rate: editingProduct.purchase_rate,
-      selling_rate: editingProduct.selling_rate,
-      notes: editingProduct.notes,
+      category: editingProduct.category || editingProduct.type || "",
+      size: editingProduct.size || "",
+      opening_stock: Number(editingProduct.opening_stock) || 0,
+      unit: editingProduct.unit || "Piece",
+      rate: Number(editingProduct.rate ?? editingProduct.purchase_rate ?? editingProduct.selling_rate ?? 0) || 0,
+      description: editingProduct.notes || editingProduct.description || "",
     })
     .eq("id", editingProduct.id);
 
@@ -110,7 +170,7 @@ const filteredItems = inventoryItems.filter((item) => {
     String(item.id).includes(searchTerm);
 
   const matchesCategory =
-    selectedCategory === "All" || item.type === selectedCategory;
+    selectedCategory === "All" || item.category === selectedCategory || item.type === selectedCategory;
 
   return matchesSearch && matchesCategory;
 });
@@ -211,11 +271,11 @@ const filteredItems = inventoryItems.filter((item) => {
 
           {/* Actions */}
           <div className="flex gap-2">
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+            <button type="button" className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
               <Filter className="w-4 h-4" />
               <span className="hidden sm:inline">Filter</span>
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+            <button type="button" className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export</span>
             </button>
@@ -264,7 +324,7 @@ const filteredItems = inventoryItems.filter((item) => {
                   <td className="px-6 py-4 text-sm text-muted-foreground">{String(item.id)}</td>
                   <td className="px-6 py-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-secondary/10 text-secondary">
-                      {item.type}
+                      {item.category || item.type || "Uncategorized"}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -276,7 +336,7 @@ const filteredItems = inventoryItems.filter((item) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 font-medium text-foreground">
-                    ₹{item.selling_rate}
+                    ₹{Number(item.rate ?? item.selling_rate ?? item.purchase_rate ?? 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -292,6 +352,8 @@ const filteredItems = inventoryItems.filter((item) => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
+                        type="button"
+                        aria-label={`Edit ${item.name}`}
                         onClick={() => {
                           setEditingProduct(item);
                           setShowEditModal(true);
@@ -301,6 +363,8 @@ const filteredItems = inventoryItems.filter((item) => {
                         <Edit className="w-4 h-4 text-muted-foreground" />
                       </button>
                       <button
+                        type="button"
+                        aria-label={`Delete ${item.name}`}
                         onClick={() => deleteProduct(item.id)}
                         className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
                       >
@@ -322,6 +386,8 @@ const filteredItems = inventoryItems.filter((item) => {
             <div className="flex items-center justify-between mb-6">
               <h2>Add New Product</h2>
               <button
+                type="button"
+                aria-label="Close add product dialog"
                 onClick={() => setShowAddModal(false)}
                 className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
@@ -332,8 +398,10 @@ const filteredItems = inventoryItems.filter((item) => {
             <form className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm mb-2">Product Name</label>
+                  <label htmlFor="new-product-name" className="block text-sm mb-2">Product Name</label>
                   <input
+                      id="new-product-name"
+                      name="newProductName"
                       type="text"
                       value={newProduct.name}
                       onChange={(e) =>
@@ -344,14 +412,16 @@ const filteredItems = inventoryItems.filter((item) => {
                       />
                 </div>
                 <div>
-                  <label className="block text-sm mb-2">Purchase Rate</label>
+                  <label htmlFor="new-product-rate" className="block text-sm mb-2">Rate (₹)</label>
                   <input
+                    id="new-product-rate"
+                    name="newProductRate"
                     type="number"
-                    value={newProduct.purchase_rate}
+                    value={newProduct.rate}
                     onChange={(e) =>
                       setNewProduct({
                         ...newProduct,
-                        purchase_rate: Number(e.target.value),
+                        rate: Number(e.target.value),
                       })
                     }
                     className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -359,8 +429,10 @@ const filteredItems = inventoryItems.filter((item) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-2">Size</label>
+                  <label htmlFor="new-product-size" className="block text-sm mb-2">Size</label>
                   <input
+                    id="new-product-size"
+                    name="newProductSize"
                     type="text"
                     value={newProduct.size}
                     onChange={(e) =>
@@ -374,11 +446,13 @@ const filteredItems = inventoryItems.filter((item) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-2">Category</label>
+                  <label htmlFor="new-product-category" className="block text-sm mb-2">Category</label>
                   <select
-                    value={newProduct.type}
+                    id="new-product-category"
+                    name="newProductCategory"
+                    value={newProduct.category}
                     onChange={(e) =>
-                      setNewProduct({ ...newProduct, type: e.target.value })
+                      setNewProduct({ ...newProduct, category: e.target.value })
                     }
                     className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
@@ -389,8 +463,10 @@ const filteredItems = inventoryItems.filter((item) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm mb-2">Supplier</label>
+                  <label htmlFor="new-product-supplier" className="block text-sm mb-2">Supplier</label>
                   <input
+                    id="new-product-supplier"
+                    name="newProductSupplier"
                     type="text"
                     className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Enter supplier name"
@@ -400,8 +476,10 @@ const filteredItems = inventoryItems.filter((item) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm mb-2">Stock Quantity</label>
+                  <label htmlFor="new-product-stock" className="block text-sm mb-2">Stock Quantity</label>
                   <input
+                    id="new-product-stock"
+                    name="newProductStock"
                     type="number"
                     value={newProduct.opening_stock}
                     onChange={(e) =>
@@ -414,8 +492,10 @@ const filteredItems = inventoryItems.filter((item) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-2">Unit</label>
+                  <label htmlFor="new-product-unit" className="block text-sm mb-2">Unit</label>
                   <select
+                    id="new-product-unit"
+                    name="newProductUnit"
                     value={newProduct.unit}
                     onChange={(e) =>
                       setNewProduct({ ...newProduct, unit: e.target.value })
@@ -429,8 +509,10 @@ const filteredItems = inventoryItems.filter((item) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm mb-2">Min Stock</label>
+                  <label htmlFor="new-product-min-stock" className="block text-sm mb-2">Min Stock</label>
                   <input
+                    id="new-product-min-stock"
+                    name="newProductMinStock"
                     type="number"
                     className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="0"
@@ -439,18 +521,19 @@ const filteredItems = inventoryItems.filter((item) => {
               </div>
 
               <div>
-                <label className="block text-sm mb-2">Price (₹)</label>
-                <input
-                  type="number"
-                  value={newProduct.selling_rate}
+                <label htmlFor="new-product-description" className="block text-sm mb-2">Description</label>
+                <textarea
+                  id="new-product-description"
+                  name="newProductDescription"
+                  value={newProduct.notes}
                   onChange={(e) =>
                     setNewProduct({
                       ...newProduct,
-                      selling_rate: Number(e.target.value),
+                      notes: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  placeholder="0.00"
+                  className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  placeholder="Optional notes"
                 />
               </div>
 
@@ -482,6 +565,8 @@ const filteredItems = inventoryItems.filter((item) => {
               <h2>Edit Product</h2>
 
               <button
+                type="button"
+                aria-label="Close edit product dialog"
                 onClick={() => setShowEditModal(false)}
                 className="p-2 hover:bg-muted rounded-lg"
               >
@@ -491,7 +576,10 @@ const filteredItems = inventoryItems.filter((item) => {
 
             <div className="space-y-4">
 
+              <label htmlFor="edit-product-name" className="block text-sm mb-2">Product Name</label>
               <input
+                id="edit-product-name"
+                name="editProductName"
                 type="text"
                 value={editingProduct.name}
                 onChange={(e) =>
@@ -504,7 +592,10 @@ const filteredItems = inventoryItems.filter((item) => {
                 placeholder="Product Name"
               />
 
+              <label htmlFor="edit-product-size" className="block text-sm mb-2">Size</label>
               <input
+                id="edit-product-size"
+                name="editProductSize"
                 type="text"
                 value={editingProduct.size}
                 onChange={(e) =>
@@ -517,11 +608,15 @@ const filteredItems = inventoryItems.filter((item) => {
                 placeholder="Size"
               />
 
+              <label htmlFor="edit-product-category" className="block text-sm mb-2">Category</label>
               <select
-                value={editingProduct.type}
+                id="edit-product-category"
+                name="editProductCategory"
+                value={editingProduct.category || editingProduct.type || ""}
                 onChange={(e) =>
                   setEditingProduct({
                     ...editingProduct,
+                    category: e.target.value,
                     type: e.target.value,
                   })
                 }
@@ -532,7 +627,10 @@ const filteredItems = inventoryItems.filter((item) => {
                 <option value="Marble">Marble</option>
               </select>
 
+              <label htmlFor="edit-product-stock" className="block text-sm mb-2">Stock Quantity</label>
               <input
+                id="edit-product-stock"
+                name="editProductStock"
                 type="number"
                 value={editingProduct.opening_stock}
                 onChange={(e) =>
@@ -545,34 +643,41 @@ const filteredItems = inventoryItems.filter((item) => {
                 placeholder="Stock"
               />
 
+              <label htmlFor="edit-product-rate" className="block text-sm mb-2">Rate (₹)</label>
               <input
+                id="edit-product-rate"
+                name="editProductRate"
                 type="number"
-                value={editingProduct.purchase_rate}
+                value={Number(editingProduct.rate ?? editingProduct.purchase_rate ?? editingProduct.selling_rate ?? 0)}
                 onChange={(e) =>
                   setEditingProduct({
                     ...editingProduct,
-                    purchase_rate: Number(e.target.value),
+                    rate: Number(e.target.value),
                   })
                 }
                 className="w-full px-4 py-2 bg-muted rounded-lg"
-                placeholder="Purchase Rate"
+                placeholder="Rate"
               />
 
-              <input
-                type="number"
-                value={editingProduct.selling_rate}
+              <label htmlFor="edit-product-notes" className="block text-sm mb-2">Description</label>
+              <textarea
+                id="edit-product-notes"
+                name="editProductNotes"
+                value={editingProduct.notes || editingProduct.description || ""}
                 onChange={(e) =>
                   setEditingProduct({
                     ...editingProduct,
-                    selling_rate: Number(e.target.value),
+                    notes: e.target.value,
+                    description: e.target.value,
                   })
                 }
                 className="w-full px-4 py-2 bg-muted rounded-lg"
-                placeholder="Selling Rate"
+                placeholder="Description"
               />
 
               <div className="flex gap-3 pt-4">
                 <button
+                  type="button"
                   onClick={updateProduct}
                   className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
                 >
@@ -580,6 +685,7 @@ const filteredItems = inventoryItems.filter((item) => {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setShowEditModal(false)}
                   className="px-4 py-2 bg-muted rounded-lg"
                 >

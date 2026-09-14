@@ -86,7 +86,7 @@ export function Profile() {
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="w-12 h-12 text-primary" />
             </div>
-            <button className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors">
+            <button type="button" aria-label="Update profile photo" className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors">
               <Camera className="w-4 h-4" />
             </button>
           </div>
@@ -267,13 +267,13 @@ export function Profile() {
       <div className="bg-card rounded-xl p-6 border border-destructive/20">
         <h3 className="text-destructive mb-6">Danger Zone</h3>
         <div className="space-y-3">
-          <button className="w-full p-4 bg-muted rounded-lg hover:bg-destructive/10 transition-colors text-left border border-transparent hover:border-destructive/20">
+          <button type="button" className="w-full p-4 bg-muted rounded-lg hover:bg-destructive/10 transition-colors text-left border border-transparent hover:border-destructive/20">
             <p className="font-medium text-foreground">Deactivate Account</p>
             <p className="text-sm text-muted-foreground mt-1">
               Temporarily disable your account
             </p>
           </button>
-          <button className="w-full p-4 bg-destructive/5 rounded-lg hover:bg-destructive/10 transition-colors text-left border border-destructive/20">
+          <button type="button" className="w-full p-4 bg-destructive/5 rounded-lg hover:bg-destructive/10 transition-colors text-left border border-destructive/20">
             <p className="font-medium text-destructive">Delete Account</p>
             <p className="text-sm text-muted-foreground mt-1">
               Permanently delete your account and all data

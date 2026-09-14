@@ -40,6 +40,7 @@ export function SalesBilling() {
   const [products, setProducts] = useState<Product[]>([]);
 
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [discount, setDiscount] = useState(0);
 
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
@@ -74,7 +75,10 @@ export function SalesBilling() {
       .select("*")
       .order("name");
 
-    if (data) setProducts(data);
+    if (data) {
+      const activeProducts = data.filter((product) => product.is_active !== false);
+      setProducts(activeProducts);
+    }
   }
 
   function addItem() {
@@ -133,9 +137,10 @@ export function SalesBilling() {
     0
   );
 
-  const gst = subtotal * 0.18;
-
-  const grandTotal = subtotal + gst;
+  const discountAmount = Math.min(discount, subtotal);
+  const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
+  const gst = discountedSubtotal * 0.18;
+  const grandTotal = discountedSubtotal + gst;
 
   async function saveBill() {
     if (!selectedCustomer) {
@@ -166,6 +171,13 @@ export function SalesBilling() {
         return;
       }
 
+      const lineAmount = item.quantity * item.rate;
+      const lineDiscount =
+        subtotal > 0 ? (discountAmount * (lineAmount / subtotal)) : 0;
+      const discountedLineAmount = Math.max(lineAmount - lineDiscount, 0);
+      const lineTaxAmount = discountedLineAmount * 0.18;
+      const lineTotal = discountedLineAmount + lineTaxAmount;
+
       const { error } = await supabase.from("sales").insert({
         bill_no: "SALE-" + Date.now(),
 
@@ -185,15 +197,13 @@ export function SalesBilling() {
 
         rate: item.rate,
 
-        amount: item.quantity * item.rate,
+        amount: lineAmount,
 
-        discount: 0,
+        discount: lineDiscount,
 
-        tax_amount: item.quantity * item.rate * 0.18,
+        tax_amount: lineTaxAmount,
 
-        total:
-          item.quantity * item.rate +
-          item.quantity * item.rate * 0.18,
+        total: lineTotal,
 
         payment_status: paymentMethod,
       });
@@ -442,6 +452,16 @@ export function SalesBilling() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Discount</span>
+              <input
+                type="number"
+                min="0"
+                value={discount}
+                onChange={(e) => setDiscount(Number(e.target.value) || 0)}
+                className="w-28 px-2 py-1 bg-muted rounded border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 text-right"
+              />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">GST (18%)</span>
