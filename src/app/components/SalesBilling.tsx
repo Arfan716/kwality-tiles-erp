@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { supabase } from "../../lib/supabase";
 import {
   Plus,
@@ -18,10 +19,10 @@ interface Customer {
 interface Product {
   id: string;
   name: string;
-  size: string;
+  size?: string;
   unit: string;
   opening_stock: number;
-  selling_rate: number;
+  rate: number;
 }
 
 interface BillItem {
@@ -34,6 +35,7 @@ interface BillItem {
 }
 
 export function SalesBilling() {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -118,7 +120,7 @@ export function SalesBilling() {
               ...i,
               productId: product.id,
               productName: product.name,
-              rate: Number(product.selling_rate),
+              rate: Number(product.rate ?? 0),
               unit: product.unit,
             }
           : i
@@ -213,7 +215,7 @@ export function SalesBilling() {
 
     alert("Invoice Saved Successfully");
 
-    window.location.reload();
+    navigate("/sales", { replace: true });
   }
 
   return (
@@ -225,11 +227,11 @@ export function SalesBilling() {
           <p className="text-muted-foreground mt-1">Create a new sales invoice</p>
         </div>
         <div className="flex gap-2">
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+          <button type="button" className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
             <Printer className="w-4 h-4" />
             Print
           </button>
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+          <button type="button" className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
             <Download className="w-4 h-4" />
             Download
           </button>
@@ -241,8 +243,10 @@ export function SalesBilling() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Customer */}
           <div>
-            <label className="block text-sm mb-2">Customer</label>
+            <label htmlFor="sales-customer" className="block text-sm mb-2">Customer</label>
             <select
+              id="sales-customer"
+              name="salesCustomer"
               value={selectedCustomer}
               onChange={(e) => setSelectedCustomer(e.target.value)}
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -258,8 +262,10 @@ export function SalesBilling() {
 
           {/* Invoice Number */}
           <div>
-            <label className="block text-sm mb-2">Invoice Number</label>
+            <label htmlFor="sales-invoice-number" className="block text-sm mb-2">Invoice Number</label>
             <input
+              id="sales-invoice-number"
+              name="salesInvoiceNumber"
               type="text"
               placeholder="SALE-00001"
               defaultValue="SALE-00123"
@@ -269,9 +275,11 @@ export function SalesBilling() {
 
           {/* Date */}
           <div>
-            <label className="block text-sm mb-2">Invoice Date</label>
+            <label htmlFor="sales-invoice-date" className="block text-sm mb-2">Invoice Date</label>
             <div className="relative">
               <input
+                id="sales-invoice-date"
+                name="salesInvoiceDate"
                 type="date"
                 defaultValue={new Date().toISOString().split("T")[0]}
                 className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -312,6 +320,8 @@ export function SalesBilling() {
                   <tr key={item.id}>
                     <td className="px-4 py-3">
                       <select
+                        id={`sales-product-${item.id}`}
+                        name={`salesProduct-${item.id}`}
                         value={item.productId}
                         onChange={(e) => selectProduct(item.id, e.target.value)}
                         className="w-full min-w-[200px] px-2 py-1 bg-background rounded border border-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20"
@@ -319,13 +329,16 @@ export function SalesBilling() {
                         <option value="">Select Product</option>
                         {products.map((product) => (
                           <option key={product.id} value={product.id}>
-                            {product.name} ({product.size}) - Stock: {product.opening_stock}
+                            {product.name}
+                            {product.size ? ` (${product.size})` : ""} - Stock: {product.opening_stock}
                           </option>
                         ))}
                       </select>
                     </td>
                     <td className="px-4 py-3">
                       <input
+                        id={`sales-qty-${item.id}`}
+                        name={`salesQty-${item.id}`}
                         type="number"
                         value={item.quantity}
                         onChange={(e) =>
@@ -336,6 +349,8 @@ export function SalesBilling() {
                     </td>
                     <td className="px-4 py-3">
                       <input
+                        id={`sales-unit-${item.id}`}
+                        name={`salesUnit-${item.id}`}
                         type="text"
                         value={item.unit}
                         readOnly
@@ -344,6 +359,8 @@ export function SalesBilling() {
                     </td>
                     <td className="px-4 py-3">
                       <input
+                        id={`sales-rate-${item.id}`}
+                        name={`salesRate-${item.id}`}
                         type="number"
                         value={item.rate}
                         readOnly
@@ -355,6 +372,8 @@ export function SalesBilling() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
+                        type="button"
+                        aria-label={`Remove item ${item.id}`}
                         onClick={() => removeItem(item.id)}
                         className="p-1 hover:bg-destructive/10 rounded transition-colors"
                       >
@@ -369,6 +388,7 @@ export function SalesBilling() {
         </div>
 
         <button
+          type="button"
           onClick={addItem}
           className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
         >
@@ -384,10 +404,11 @@ export function SalesBilling() {
           <h3 className="mb-4">Payment Details</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm mb-2">Payment Method</label>
+              <p className="block text-sm mb-2">Payment Method</p>
               <div className="grid grid-cols-2 gap-2">
                 {["Cash", "Card", "Upi", "Cheque"].map((method) => (
                   <button
+                    type="button"
                     key={method}
                     onClick={() => setPaymentMethod(method)}
                     className={`px-4 py-2 rounded-lg transition-colors capitalize ${
@@ -402,8 +423,10 @@ export function SalesBilling() {
               </div>
             </div>
             <div>
-              <label className="block text-sm mb-2">Notes</label>
+              <label htmlFor="sales-notes" className="block text-sm mb-2">Notes</label>
               <textarea
+                id="sales-notes"
+                name="salesNotes"
                 rows={4}
                 placeholder="Add any additional notes..."
                 className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
@@ -436,12 +459,13 @@ export function SalesBilling() {
 
           <div className="flex gap-3 mt-6">
             <button
+              type="button"
               onClick={saveBill}
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               Save & Print
             </button>
-            <button className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors">
+            <button type="button" className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors">
               Cancel
             </button>
           </div>
