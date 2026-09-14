@@ -1,7 +1,7 @@
 import { LogOut } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useState } from "react";
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
   Package,
@@ -38,6 +38,7 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const role = localStorage.getItem("userRole") || "staff";
   const permissions = JSON.parse(
   localStorage.getItem("permissions") || "[]"
@@ -114,12 +115,12 @@ const navigation = allNavigation.filter(
   const userName = localStorage.getItem("userName") || "User";
   const userEmail = localStorage.getItem("userEmail") || "";
   const handleLogout = async () => {
-  await supabase.auth.signOut();
+    await supabase.auth.signOut();
 
-  localStorage.clear();
+    localStorage.clear();
 
-  window.location.href = "/login";
-};
+    navigate("/login", { replace: true });
+  };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -188,6 +189,7 @@ const navigation = allNavigation.filter(
   </Link>
 
   <button
+    type="button"
     onClick={handleLogout}
     className="w-full mt-3 flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
   >
@@ -225,6 +227,7 @@ const navigation = allNavigation.filter(
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setSidebarOpen(false)}
               className="p-2 rounded-lg hover:bg-muted"
             >
@@ -264,6 +267,7 @@ const navigation = allNavigation.filter(
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4 flex-1">
               <button
+                type="button"
                 onClick={() => setSidebarOpen(true)}
                 className="p-2 rounded-lg hover:bg-muted lg:hidden"
               >
@@ -286,6 +290,7 @@ const navigation = allNavigation.filter(
             {/* Right Actions */}
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={toggleDarkMode}
                 className="p-2 rounded-lg hover:bg-muted"
               >
@@ -295,12 +300,13 @@ const navigation = allNavigation.filter(
                   <Moon className="w-5 h-5" />
                 )}
               </button>
-              <button className="p-2 rounded-lg hover:bg-muted relative">
+              <button type="button" className="p-2 rounded-lg hover:bg-muted relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
               </button>
               <Link
                 to="/profile"
+                aria-label="Open profile"
                 className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted"
               >
                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
