@@ -70,6 +70,9 @@ export function Bills() {
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 40;
     let y = 40;
+    const lineHeight = 12;
+    const metaX = pageWidth - margin - 200;
+    const leftColumnWidth = metaX - margin - 20;
 
     // Header
     doc.setFontSize(20);
@@ -77,42 +80,48 @@ export function Bills() {
     doc.text(businessSettings.business_name || "Kwality Tiles & Granite", margin, y);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    const companyLines = [
+    const companyText = [
       businessSettings.address || "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
       `${businessSettings.phone ? `Phone: ${businessSettings.phone}` : "Phone: N/A"}${businessSettings.email ? ` | Email: ${businessSettings.email}` : ""}`,
       businessSettings.gstin ? `GSTIN: ${businessSettings.gstin}` : "GSTIN: N/A",
-    ];
+    ].flatMap((line) => doc.splitTextToSize(line, leftColumnWidth));
     y += 24;
-    companyLines.forEach((l) => {
-      doc.text(l, margin, y);
-      y += 12;
+    companyText.forEach((line) => {
+      doc.text(line, margin, y);
+      y += lineHeight;
     });
 
     // Invoice meta on right
-    const metaX = pageWidth - margin - 200;
-    y = 60;
+    let metaY = 60;
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("Invoice", metaX, y);
+    doc.text("Invoice", metaX, metaY);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    y += 18;
-    doc.text(`Invoice Number: ${bill.billNo}`, metaX, y);
-    y += 12;
-    doc.text(`Invoice Date: ${new Date(bill.date).toLocaleDateString()}`, metaX, y);
-    y += 12;
-    doc.text(`Type: ${bill.type}`, metaX, y);
+    metaY += 18;
+    const invoiceMetaLines = [
+      `Invoice Number: ${bill.billNo}`,
+      `Invoice Date: ${new Date(bill.date).toLocaleDateString()}`,
+      `Type: ${bill.type}`,
+    ].flatMap((line) => doc.splitTextToSize(line, pageWidth - metaX - margin));
+    invoiceMetaLines.forEach((line) => {
+      doc.text(line, metaX, metaY);
+      metaY += lineHeight;
+    });
 
     // Receiver
-    y += 26;
+    y = Math.max(y, metaY) + 26;
     doc.setFont("helvetica", "bold");
     doc.text("Bill To:", margin, y);
     doc.setFont("helvetica", "normal");
-    y += 14;
+    y += 18;
     doc.text(`Customer Name: ${bill.party}`, margin, y);
-    y += 12;
-    doc.text(`Customer Address: ${customerAddress}`, margin, y);
-    y += 12;
+    y += 18;
+    doc.text("Customer Address:", margin, y);
+    y += 14;
+    const addressLines = doc.splitTextToSize(customerAddress, leftColumnWidth);
+    doc.text(addressLines, margin, y);
+    y += addressLines.length * lineHeight + 14;
     doc.text(`Customer GSTIN: ${customerGstin}`, margin, y);
 
     // Table: Subtotal / GST / Total
