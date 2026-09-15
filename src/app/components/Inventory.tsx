@@ -24,6 +24,16 @@ const [newProduct, setNewProduct] = useState({
 });
 useEffect(() => {
   fetchProducts();
+
+  const handleInventoryUpdated = () => {
+    void fetchProducts();
+  };
+
+  window.addEventListener("inventory-updated", handleInventoryUpdated);
+
+  return () => {
+    window.removeEventListener("inventory-updated", handleInventoryUpdated);
+  };
 }, []);
 
 async function fetchProducts() {

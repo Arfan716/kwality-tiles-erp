@@ -234,7 +234,8 @@ export function Reports() {
         }
 
         const filteredSales = sales.filter((sale) =>
-          isWithinDateRange(sale.bill_date, start, end)
+          isWithinDateRange(sale.bill_date, start, end) &&
+          String(sale.status || "paid").toLowerCase() !== "cancelled"
         );
 
         const filteredPurchases = purchases.filter((purchase) =>

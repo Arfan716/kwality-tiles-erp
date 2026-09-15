@@ -153,6 +153,8 @@ export function SalesBilling() {
 
     if (!customer) return;
 
+    const billNo = "SALE-" + Date.now();
+
     for (const item of items) {
       const product = products.find(
         (p) => p.id === item.productId
@@ -176,7 +178,7 @@ export function SalesBilling() {
       const discountedLineAmount = Math.max(lineAmount - lineDiscount, 0);
 
       const { error } = await supabase.from("sales").insert({
-        bill_no: "SALE-" + Date.now(),
+        bill_no: billNo,
 
         bill_date: new Date(),
 

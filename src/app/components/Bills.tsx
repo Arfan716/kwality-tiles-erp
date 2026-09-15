@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Download, Eye, FileText, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Search, Download, Eye, FileText, CheckCircle, Clock, AlertCircle, RotateCcw } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "../../lib/supabase";
@@ -25,6 +25,8 @@ export function Bills() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [reversingBillId, setReversingBillId] = useState<string | null>(null);
 
   useEffect(() => {
     loadBills();
@@ -74,6 +76,14 @@ export function Bills() {
       doc.text(line, metaX, metaY);
       metaY += lineHeight;
     });
+    if (bill.status.toLowerCase() === "cancelled") {
+      doc.setTextColor(180, 0, 0);
+      doc.setFont("helvetica", "bold");
+      doc.text("Status: CANCELLED", metaX, metaY);
+      metaY += lineHeight;
+      doc.setTextColor(40, 40, 40);
+      doc.setFont("helvetica", "normal");
+    }
 
     // Receiver
     y = Math.max(y, metaY) + 26;
@@ -171,18 +181,35 @@ autoTable(doc, {
     const { data: sales } = await supabase.from("sales").select("*");
     const { data: purchases } = await supabase.from("purchases").select("*");
 
-    const salesBills = sales?.map((sale: any) => ({
-      id: sale.id,
-      billNo: sale.bill_no,
-      type: "Sales" as const,
-      party: sale.customer_name,
-      customerId: sale.customer_id,
-      customerAddress: sale.customer_address,
-      date: sale.bill_date,
-      amount: Number(sale.amount || sale.total) - Number(sale.discount || 0),
-      paid: Number(sale.amount || sale.total) - Number(sale.discount || 0),
-      status: "Paid",
-    })) || [];
+    const salesByBill = new Map<string, Bill>();
+    (sales || []).forEach((sale: any) => {
+      const amount = Number(sale.amount || sale.total) - Number(sale.discount || 0);
+      const existing = salesByBill.get(sale.bill_no);
+
+      if (existing) {
+        existing.amount += amount;
+        existing.paid += amount;
+        if (String(sale.status || "paid").toLowerCase() === "cancelled") {
+          existing.status = "Cancelled";
+        }
+        return;
+      }
+
+      salesByBill.set(sale.bill_no, {
+        id: sale.id,
+        billNo: sale.bill_no,
+        type: "Sales",
+        party: sale.customer_name,
+        customerId: sale.customer_id,
+        customerAddress: sale.customer_address,
+        date: sale.bill_date,
+        amount,
+        paid: amount,
+        status: String(sale.status || "paid").toLowerCase() === "cancelled" ? "Cancelled" : "Paid",
+      });
+    });
+
+    const salesBills = Array.from(salesByBill.values());
 
     const purchaseBills = purchases?.map((purchase: any) => ({
       id: purchase.id,
@@ -196,6 +223,44 @@ autoTable(doc, {
     })) || [];
 
     setBills([...salesBills, ...purchaseBills]);
+  }
+
+  const canReverseBills = (() => {
+    const role = localStorage.getItem("userRole");
+    if (role === "admin") return true;
+
+    try {
+      const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
+      return Array.isArray(permissions) &&
+        (permissions.includes("all") || permissions.includes("bills") || permissions.includes("sales"));
+    } catch {
+      return false;
+    }
+  })();
+
+  async function cancelAndReverseBill() {
+    if (!selectedBill || selectedBill.type !== "Sales") return;
+
+    try {
+      setReversingBillId(selectedBill.id);
+      const { error } = await supabase.rpc("cancel_and_reverse_sale", {
+        p_sale_id: selectedBill.id,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setShowCancelDialog(false);
+      setSelectedBill(null);
+      await loadBills();
+      window.dispatchEvent(new Event("inventory-updated"));
+      alert("Bill cancelled successfully and inventory has been restored.");
+    } catch (error: any) {
+      alert("Unable to cancel bill: " + (error?.message || "Unknown error"));
+    } finally {
+      setReversingBillId(null);
+    }
   }
 
   const filteredBills = bills.filter((bill) => {
@@ -216,6 +281,8 @@ autoTable(doc, {
         return <Clock className="w-4 h-4" />;
       case "Overdue":
         return <AlertCircle className="w-4 h-4" />;
+      case "Cancelled":
+        return <AlertCircle className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
     }
@@ -230,6 +297,8 @@ autoTable(doc, {
       case "Partial":
         return "bg-secondary/10 text-secondary";
       case "Overdue":
+        return "bg-destructive/10 text-destructive";
+      case "Cancelled":
         return "bg-destructive/10 text-destructive";
       default:
         return "bg-muted text-muted-foreground";
@@ -315,6 +384,7 @@ autoTable(doc, {
               <option>Pending</option>
               <option>Partial</option>
               <option>Overdue</option>
+              <option>Cancelled</option>
             </select>
             <button type="button" className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
               <Download className="w-4 h-4" />
@@ -387,7 +457,7 @@ autoTable(doc, {
                       )}`}
                     >
                       {getStatusIcon(bill.status)}
-                      {bill.status}
+                      {bill.status === "Cancelled" ? "CANCELLED" : bill.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -411,6 +481,20 @@ autoTable(doc, {
                       >
                         <Download className="w-4 h-4 text-muted-foreground" />
                       </button>
+                      {canReverseBills && bill.type === "Sales" && bill.status !== "Cancelled" && (
+                        <button
+                          type="button"
+                          aria-label={`Cancel and reverse bill ${bill.billNo}`}
+                          onClick={() => {
+                            setSelectedBill(bill);
+                            setShowCancelDialog(true);
+                          }}
+                          className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
+                          title="Cancel & Reverse"
+                        >
+                          <RotateCcw className="w-4 h-4 text-destructive" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -459,7 +543,9 @@ autoTable(doc, {
 
               <div className="flex justify-between">
                 <span>Status</span>
-                <strong>{selectedBill.status}</strong>
+                <strong className={selectedBill.status === "Cancelled" ? "text-destructive" : ""}>
+                  {selectedBill.status}
+                </strong>
               </div>
 
             </div>
@@ -486,6 +572,35 @@ autoTable(doc, {
 
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {showCancelDialog && selectedBill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-xl p-6 w-full max-w-md border border-border">
+            <h2 className="text-xl font-semibold mb-3">Cancel &amp; Reverse Bill?</h2>
+            <p className="text-muted-foreground mb-6">
+              This will cancel the bill and restore all sold quantities to inventory. The bill will remain in history.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelDialog(false)}
+                disabled={reversingBillId !== null}
+                className="px-4 py-2 bg-muted rounded-lg disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={cancelAndReverseBill}
+                disabled={reversingBillId !== null}
+                className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg disabled:opacity-50"
+              >
+                {reversingBillId !== null ? "Reversing Bill..." : "Confirm Reverse"}
+              </button>
+            </div>
           </div>
         </div>
       )}
