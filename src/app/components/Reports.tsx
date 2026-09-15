@@ -52,6 +52,9 @@ const toNumber = (value: unknown) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const getNetAmount = (record: any) =>
+  toNumber(record.amount ?? record.total) - toNumber(record.discount);
+
 const getMonthLabel = (date: Date) =>
   date.toLocaleString("en-US", { month: "short" });
 
@@ -165,7 +168,7 @@ const buildMonthlyPerformance = (
       if (!saleDate) return sum;
 
       const saleMonthKey = `${saleDate.getFullYear()}-${saleDate.getMonth()}`;
-      return saleMonthKey === monthKey ? sum + toNumber(sale.total || sale.amount) : sum;
+      return saleMonthKey === monthKey ? sum + getNetAmount(sale) : sum;
     }, 0);
 
     const purchasesTotal = purchases.reduce((sum, purchase) => {
@@ -173,7 +176,7 @@ const buildMonthlyPerformance = (
       if (!purchaseDate) return sum;
 
       const purchaseMonthKey = `${purchaseDate.getFullYear()}-${purchaseDate.getMonth()}`;
-      return purchaseMonthKey === monthKey ? sum + toNumber(purchase.total || purchase.amount) : sum;
+      return purchaseMonthKey === monthKey ? sum + getNetAmount(purchase) : sum;
     }, 0);
 
     return {
@@ -282,7 +285,7 @@ export function Reports() {
             };
 
             existing.sold += toNumber(sale.quantity);
-            existing.revenue += toNumber(sale.total || sale.amount);
+            existing.revenue += getNetAmount(sale);
             map.set(key, existing);
             return map;
           }, new Map<string, { name: string; sold: number; revenue: number }>()),
@@ -301,7 +304,7 @@ export function Reports() {
             };
 
             existing.orders += 1;
-            existing.spent += toNumber(sale.total || sale.amount);
+            existing.spent += getNetAmount(sale);
             map.set(key, existing);
             return map;
           }, new Map<string, { name: string; orders: number; spent: number }>()),
@@ -313,7 +316,7 @@ export function Reports() {
         const paymentSummary = filteredSales.reduce(
           (summary, sale) => {
             const status = (sale.payment_status || "").trim().toLowerCase();
-            const total = toNumber(sale.total || sale.amount);
+            const total = getNetAmount(sale);
 
             if (status === "pending") {
               summary.pendingCollection += total;
@@ -342,7 +345,7 @@ export function Reports() {
         );
 
         const totalSalesAmount = filteredSales.reduce(
-          (sum, sale) => sum + toNumber(sale.total || sale.amount),
+          (sum, sale) => sum + getNetAmount(sale),
           0
         );
         const totalTransactions = filteredSales.length;

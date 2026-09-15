@@ -139,8 +139,7 @@ export function SalesBilling() {
 
   const discountAmount = Math.min(discount, subtotal);
   const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
-  const gst = discountedSubtotal * 0.18;
-  const grandTotal = discountedSubtotal + gst;
+  const grandTotal = discountedSubtotal;
 
   async function saveBill() {
     if (!selectedCustomer) {
@@ -175,8 +174,6 @@ export function SalesBilling() {
       const lineDiscount =
         subtotal > 0 ? (discountAmount * (lineAmount / subtotal)) : 0;
       const discountedLineAmount = Math.max(lineAmount - lineDiscount, 0);
-      const lineTaxAmount = discountedLineAmount * 0.18;
-      const lineTotal = discountedLineAmount + lineTaxAmount;
 
       const { error } = await supabase.from("sales").insert({
         bill_no: "SALE-" + Date.now(),
@@ -201,9 +198,7 @@ export function SalesBilling() {
 
         discount: lineDiscount,
 
-        tax_amount: lineTaxAmount,
-
-        total: lineTotal,
+        total: discountedLineAmount,
 
         payment_status: paymentMethod,
       });
@@ -462,10 +457,6 @@ export function SalesBilling() {
                 onChange={(e) => setDiscount(Number(e.target.value) || 0)}
                 className="w-28 px-2 py-1 bg-muted rounded border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 text-right"
               />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">GST (18%)</span>
-              <span className="font-medium">₹{gst.toFixed(2)}</span>
             </div>
             <div className="pt-3 border-t border-border">
               <div className="flex items-center justify-between">

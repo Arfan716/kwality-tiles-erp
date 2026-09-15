@@ -126,9 +126,7 @@ export function PurchaseEntry() {
     0
   );
 
-  const gst = subtotal * 0.18;
-
-  const grandTotal = subtotal + gst;
+  const grandTotal = subtotal;
 
   async function savePurchase() {
     if (!selectedSupplier) {
@@ -173,11 +171,7 @@ export function PurchaseEntry() {
 
         discount: 0,
 
-        tax_amount: item.quantity * item.rate * 0.18,
-
-        total:
-          item.quantity * item.rate +
-          item.quantity * item.rate * 0.18,
+        total: item.quantity * item.rate,
 
         notes: "",
       });
@@ -391,10 +385,6 @@ export function PurchaseEntry() {
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-medium">₹{subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">GST (18%)</span>
-              <span className="font-medium">₹{gst.toFixed(2)}</span>
             </div>
             <div className="pt-3 border-t border-border">
               <div className="flex items-center justify-between">

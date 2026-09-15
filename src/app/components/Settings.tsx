@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 
 const defaultBusinessSettings = {
   businessName: "Kwality Tiles & Granite",
-  gstin: "",
   phone: "+91 9876543210",
   email: "contact@kwalitytiles.com",
   address: "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
@@ -34,7 +33,6 @@ export function Settings() {
     if (data) {
       setBusinessSettings({
         businessName: data.business_name || defaultBusinessSettings.businessName,
-        gstin: data.gstin || "",
         phone: data.phone || defaultBusinessSettings.phone,
         email: data.email || defaultBusinessSettings.email,
         address: data.address || defaultBusinessSettings.address,
@@ -45,7 +43,6 @@ export function Settings() {
     const defaultData = {
       id: "main",
       business_name: defaultBusinessSettings.businessName,
-      gstin: null,
       phone: defaultBusinessSettings.phone,
       email: defaultBusinessSettings.email,
       address: defaultBusinessSettings.address,
@@ -73,7 +70,6 @@ export function Settings() {
           {
             id: "main",
             business_name: businessSettings.businessName,
-            gstin: businessSettings.gstin || null,
             phone: businessSettings.phone,
             email: businessSettings.email,
             address: businessSettings.address,
@@ -205,22 +201,6 @@ export function Settings() {
                 setBusinessSettings((prev) => ({
                   ...prev,
                   businessName: e.target.value,
-                }))
-              }
-              className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-          <div>
-            <label htmlFor="gst-number" className="block text-sm mb-2">GST Number</label>
-            <input
-              id="gst-number"
-              name="gstNumber"
-              type="text"
-              value={businessSettings.gstin}
-              onChange={(e) =>
-                setBusinessSettings((prev) => ({
-                  ...prev,
-                  gstin: e.target.value,
                 }))
               }
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"

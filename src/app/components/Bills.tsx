@@ -30,41 +30,8 @@ export function Bills() {
     loadBills();
   }, []);
 
-  async function downloadPDF(bill: Bill) {
-    const [businessSettingsResponse, customerResponse] = await Promise.all([
-      supabase
-        .from("business_settings")
-        .select("business_name, gstin, phone, email, address")
-        .eq("id", "main")
-        .maybeSingle(),
-      bill.customerId
-        ? supabase
-            .from("customers")
-            .select("name, address, gstin")
-            .eq("id", bill.customerId)
-            .maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
-    ]);
-
-    if (businessSettingsResponse.error) {
-      throw businessSettingsResponse.error;
-    }
-
-    if (customerResponse.error) {
-      throw customerResponse.error;
-    }
-
-    const businessSettings = businessSettingsResponse.data || {
-      business_name: "Kwality Tiles & Granite",
-      gstin: "",
-      phone: "+91 9876543210",
-      email: "contact@kwalitytiles.com",
-      address: "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
-    };
-
-    const customer = customerResponse.data || null;
-    const customerAddress = customer?.address || bill.customerAddress || "N/A";
-    const customerGstin = customer?.gstin || "N/A";
+  function downloadPDF(bill: Bill) {
+    const customerAddress = bill.customerAddress || "N/A";
 
     const doc = new jsPDF("p", "pt", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -77,13 +44,12 @@ export function Bills() {
     // Header
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text(businessSettings.business_name || "Kwality Tiles & Granite", margin, y);
+    doc.text("Kwality Tiles & Granite", margin, y);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const companyText = [
-      businessSettings.address || "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
-      `${businessSettings.phone ? `Phone: ${businessSettings.phone}` : "Phone: N/A"}${businessSettings.email ? ` | Email: ${businessSettings.email}` : ""}`,
-      businessSettings.gstin ? `GSTIN: ${businessSettings.gstin}` : "GSTIN: N/A",
+      "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
+      "Phone: +91 9876543210 | Email: contact@kwalitytiles.com",
     ].flatMap((line) => doc.splitTextToSize(line, leftColumnWidth));
     y += 24;
     companyText.forEach((line) => {
@@ -122,12 +88,9 @@ export function Bills() {
     const addressLines = doc.splitTextToSize(customerAddress, leftColumnWidth);
     doc.text(addressLines, margin, y);
     y += addressLines.length * lineHeight + 14;
-    doc.text(`Customer GSTIN: ${customerGstin}`, margin, y);
 
-    // Table: Subtotal / GST / Total
-const total = Number(bill.amount || 0);
-const subtotal = +(total / 1.18).toFixed(2);
-const gst = +(total - subtotal).toFixed(2);
+    // Table: final amount
+    const total = Number(bill.amount || 0);
 
 autoTable(doc, {
   startY: y + 18,
@@ -151,25 +114,7 @@ autoTable(doc, {
 
   body: [
     [
-      "Subtotal",
-      {
-        content: `Rs. ${formatCurrency(subtotal)}`,
-        styles: {
-          halign: "right",
-        },
-      },
-    ],
-    [
-      "GST (18%)",
-      {
-        content: `Rs. ${formatCurrency(gst)}`,
-        styles: {
-          halign: "right",
-        },
-      },
-    ],
-    [
-      "Grand Total",
+      "Total Amount",
       {
         content: `Rs. ${formatCurrency(total)}`,
         styles: {
@@ -234,8 +179,8 @@ autoTable(doc, {
       customerId: sale.customer_id,
       customerAddress: sale.customer_address,
       date: sale.bill_date,
-      amount: Number(sale.total),
-      paid: Number(sale.total),
+      amount: Number(sale.amount || sale.total) - Number(sale.discount || 0),
+      paid: Number(sale.amount || sale.total) - Number(sale.discount || 0),
       status: "Paid",
     })) || [];
 
@@ -245,8 +190,8 @@ autoTable(doc, {
       type: "Purchase" as const,
       party: purchase.supplier_name,
       date: purchase.purchase_date,
-      amount: Number(purchase.total),
-      paid: Number(purchase.total),
+      amount: Number(purchase.amount || purchase.total) - Number(purchase.discount || 0),
+      paid: Number(purchase.amount || purchase.total) - Number(purchase.discount || 0),
       status: "Paid",
     })) || [];
 
