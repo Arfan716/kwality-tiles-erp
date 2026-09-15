@@ -10,6 +10,8 @@ interface Bill {
   billNo: string;
   type: "Sales" | "Purchase";
   party: string;
+  customerId?: string;
+  customerAddress?: string;
   date: string;
   amount: number;
   paid: number;
@@ -28,7 +30,42 @@ export function Bills() {
     loadBills();
   }, []);
 
-  function downloadPDF(bill: Bill) {
+  async function downloadPDF(bill: Bill) {
+    const [businessSettingsResponse, customerResponse] = await Promise.all([
+      supabase
+        .from("business_settings")
+        .select("business_name, gstin, phone, email, address")
+        .eq("id", "main")
+        .maybeSingle(),
+      bill.customerId
+        ? supabase
+            .from("customers")
+            .select("name, address, gstin")
+            .eq("id", bill.customerId)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+
+    if (businessSettingsResponse.error) {
+      throw businessSettingsResponse.error;
+    }
+
+    if (customerResponse.error) {
+      throw customerResponse.error;
+    }
+
+    const businessSettings = businessSettingsResponse.data || {
+      business_name: "Kwality Tiles & Granite",
+      gstin: "",
+      phone: "+91 9876543210",
+      email: "contact@kwalitytiles.com",
+      address: "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
+    };
+
+    const customer = customerResponse.data || null;
+    const customerAddress = customer?.address || bill.customerAddress || "N/A";
+    const customerGstin = customer?.gstin || "N/A";
+
     const doc = new jsPDF("p", "pt", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 40;
@@ -37,13 +74,13 @@ export function Bills() {
     // Header
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("Kwality Tiles & Granite", margin, y);
+    doc.text(businessSettings.business_name || "Kwality Tiles & Granite", margin, y);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const companyLines = [
-      "Shop No. 12, Central Market",
-      "City Name, State - Pincode",
-      "Phone: 01234-567890 | Email: info@kwalitytiles.com",
+      businessSettings.address || "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
+      `${businessSettings.phone ? `Phone: ${businessSettings.phone}` : "Phone: N/A"}${businessSettings.email ? ` | Email: ${businessSettings.email}` : ""}`,
+      businessSettings.gstin ? `GSTIN: ${businessSettings.gstin}` : "GSTIN: N/A",
     ];
     y += 24;
     companyLines.forEach((l) => {
@@ -55,12 +92,14 @@ export function Bills() {
     const metaX = pageWidth - margin - 200;
     y = 60;
     doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");    doc.text("Invoice", metaX, y);
+    doc.setFont("helvetica", "bold");
+    doc.text("Invoice", metaX, y);
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");    y += 18;
-    doc.text(`Bill No: ${bill.billNo}`, metaX, y);
+    doc.setFont("helvetica", "normal");
+    y += 18;
+    doc.text(`Invoice Number: ${bill.billNo}`, metaX, y);
     y += 12;
-    doc.text(`Date: ${new Date(bill.date).toLocaleDateString()}`, metaX, y);
+    doc.text(`Invoice Date: ${new Date(bill.date).toLocaleDateString()}`, metaX, y);
     y += 12;
     doc.text(`Type: ${bill.type}`, metaX, y);
 
@@ -70,7 +109,11 @@ export function Bills() {
     doc.text("Bill To:", margin, y);
     doc.setFont("helvetica", "normal");
     y += 14;
-    doc.text(bill.party, margin, y);
+    doc.text(`Customer Name: ${bill.party}`, margin, y);
+    y += 12;
+    doc.text(`Customer Address: ${customerAddress}`, margin, y);
+    y += 12;
+    doc.text(`Customer GSTIN: ${customerGstin}`, margin, y);
 
     // Table: Subtotal / GST / Total
 const total = Number(bill.amount || 0);
@@ -179,6 +222,8 @@ autoTable(doc, {
       billNo: sale.bill_no,
       type: "Sales" as const,
       party: sale.customer_name,
+      customerId: sale.customer_id,
+      customerAddress: sale.customer_address,
       date: sale.bill_date,
       amount: Number(sale.total),
       paid: Number(sale.total),

@@ -1,9 +1,97 @@
 import { Save, Building2, IndianRupee, Bell, Shield, Database } from "lucide-react";
 import { supabase } from "../../lib/supabase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const defaultBusinessSettings = {
+  businessName: "Kwality Tiles & Granite",
+  gstin: "",
+  phone: "+91 9876543210",
+  email: "contact@kwalitytiles.com",
+  address: "Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001",
+};
 
 export function Settings() {
   const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [businessSettings, setBusinessSettings] = useState(defaultBusinessSettings);
+
+  useEffect(() => {
+    void loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    const { data, error } = await supabase
+      .from("business_settings")
+      .select("*")
+      .eq("id", "main")
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") {
+      alert("❌ Failed to load business settings: " + error.message);
+      return;
+    }
+
+    if (data) {
+      setBusinessSettings({
+        businessName: data.business_name || defaultBusinessSettings.businessName,
+        gstin: data.gstin || "",
+        phone: data.phone || defaultBusinessSettings.phone,
+        email: data.email || defaultBusinessSettings.email,
+        address: data.address || defaultBusinessSettings.address,
+      });
+      return;
+    }
+
+    const defaultData = {
+      id: "main",
+      business_name: defaultBusinessSettings.businessName,
+      gstin: null,
+      phone: defaultBusinessSettings.phone,
+      email: defaultBusinessSettings.email,
+      address: defaultBusinessSettings.address,
+    };
+
+    const { error: upsertError } = await supabase
+      .from("business_settings")
+      .upsert(defaultData, { onConflict: "id" });
+
+    if (upsertError) {
+      alert("❌ Failed to initialize business settings: " + upsertError.message);
+      return;
+    }
+
+    setBusinessSettings(defaultBusinessSettings);
+  };
+
+  const saveSettings = async () => {
+    try {
+      setSaving(true);
+
+      const { error } = await supabase
+        .from("business_settings")
+        .upsert(
+          {
+            id: "main",
+            business_name: businessSettings.businessName,
+            gstin: businessSettings.gstin || null,
+            phone: businessSettings.phone,
+            email: businessSettings.email,
+            address: businessSettings.address,
+          },
+          { onConflict: "id" }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      alert("✅ Business settings saved successfully!");
+    } catch (error: any) {
+      alert("❌ Failed to save business settings: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Export data to CSV
   const exportData = async () => {
@@ -112,7 +200,13 @@ export function Settings() {
               id="business-name"
               name="businessName"
               type="text"
-              defaultValue="Kwality Tiles & Granite"
+              value={businessSettings.businessName}
+              onChange={(e) =>
+                setBusinessSettings((prev) => ({
+                  ...prev,
+                  businessName: e.target.value,
+                }))
+              }
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -122,7 +216,13 @@ export function Settings() {
               id="gst-number"
               name="gstNumber"
               type="text"
-              defaultValue="27XXXXX1234X1ZX"
+              value={businessSettings.gstin}
+              onChange={(e) =>
+                setBusinessSettings((prev) => ({
+                  ...prev,
+                  gstin: e.target.value,
+                }))
+              }
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -132,7 +232,13 @@ export function Settings() {
               id="business-phone"
               name="businessPhone"
               type="tel"
-              defaultValue="+91 9876543210"
+              value={businessSettings.phone}
+              onChange={(e) =>
+                setBusinessSettings((prev) => ({
+                  ...prev,
+                  phone: e.target.value,
+                }))
+              }
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -142,7 +248,13 @@ export function Settings() {
               id="business-email"
               name="businessEmail"
               type="email"
-              defaultValue="contact@kwalitytiles.com"
+              value={businessSettings.email}
+              onChange={(e) =>
+                setBusinessSettings((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }))
+              }
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -152,7 +264,13 @@ export function Settings() {
               id="business-address"
               name="businessAddress"
               rows={3}
-              defaultValue="Shop No. 12, Building Materials Market, Mumbai, Maharashtra 400001"
+              value={businessSettings.address}
+              onChange={(e) =>
+                setBusinessSettings((prev) => ({
+                  ...prev,
+                  address: e.target.value,
+                }))
+              }
               className="w-full px-4 py-2 bg-muted rounded-lg border border-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
             />
           </div>
@@ -316,9 +434,14 @@ export function Settings() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <button type="button" className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+        <button
+          type="button"
+          onClick={saveSettings}
+          disabled={saving}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
           <Save className="w-4 h-4" />
-          Save Changes
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>
